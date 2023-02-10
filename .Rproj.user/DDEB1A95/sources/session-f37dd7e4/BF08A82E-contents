@@ -1,0 +1,42 @@
+library("data.table")
+library("lubridate")
+
+#loading data
+customer <- fread("/Users/nehasingh/Library/CloudStorage/OneDrive-Personal/UZH/2023/Spring_2023/R/day5/data_customer.csv")
+personal <- fread("/Users/nehasingh/Library/CloudStorage/OneDrive-Personal/UZH/2023/Spring_2023/R/day5/data_personal.csv")
+
+#merge two data tables
+df <- merge(customer, personal, by="CustomerId")
+
+#set columns to factors
+df$Exited <- as.factor(df$Exited)
+df$Gender <- as.factor(df$Gender)
+
+#quick check on data using functions str() and summary()
+str(df)
+summary(df)
+
+#creation of model for churn probability using logistic regression
+formula <- Exited~CreditScore+Gender+Age+Tenure+Balance+NumOfProducts+HasCrCard+IsActiveMember+EstimatedSalary
+glm.fit <- glm(formula, data = df, family = 'binomial')
+summary(glm.fit)
+
+#predict churn probability for each customer and add it as a new column 'Churn'
+df$Churn = predict(glm.fit, type = "response")
+df
+
+#customer with the highest churn probability
+highest_churn_cust <- df[df$Churn==max(df$Churn), CustomerId]
+print(highest_churn_cust)
+#customer with the lowest churn probability
+lowest_churn_cust <- df[df$Churn==min(df$Churn), CustomerId]
+print(lowest_churn_cust)
+
+mean(df[df$Gender=="Male",Churn])
+mean(df[df$Gender=="Female",Churn])
+
+#using package
+library(ChurnPredictor)
+pred <- churn_pred(df, 15653251)
+print(pred)
+
